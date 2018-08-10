@@ -33,9 +33,10 @@ from tools import IoU
 
 def main(input_size, annotation_fp, image_dir, output_dir):
     save_dir = os.path.join(output_dir, 'native_' + str(input_size))
-    pos_save_dir = save_dir + '/positive'
-    part_save_dir = save_dir + '/part'
-    neg_save_dir = save_dir + '/negative'
+    pos_save_dir = os.path.join(save_dir, 'positive')
+    part_save_dir = os.path.join(save_dir, 'part')
+    neg_save_dir = os.path.join(save_dir, 'negative')
+
     if not os.path.exists(save_dir):
         os.mkdir(save_dir)
     if not os.path.exists(pos_save_dir):
@@ -62,7 +63,6 @@ def main(input_size, annotation_fp, image_dir, output_dir):
         annotation = annotation.strip().split(' ')
         im_path = annotation[0]
         bbox = list(map(float, annotation[1:5]))
-        pts = np.array(annotation[5:], dtype=np.float32)
         boxes = np.array(bbox, dtype=np.float32).reshape(-1, 4)
         img = cv2.imread(os.path.join(image_dir, im_path))
         idx += 1
@@ -148,23 +148,21 @@ def main(input_size, annotation_fp, image_dir, output_dir):
             print('%s images done, pos: %s part: %s neg: %s' %
                   (idx, p_idx, d_idx, n_idx))
 
-
     f1.close()
     f2.close()
     f3.close()
 
 
-def parse_arguments():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('input_size', type=int,
-                        help='The input size for specific net')
-    parser.add_argument('annotation_fp', type=str)
-    parser.add_argument('image_dir', type=str)
-    parser.add_argument('output_dir', type=str)
-    return parser.parse_args()
-
-
 if __name__ == '__main__':
+    def parse_arguments():
+        parser = argparse.ArgumentParser()
+        parser.add_argument('input_size', type=int,
+                            help='The input size for specific net')
+        parser.add_argument('annotation_fp', type=str)
+        parser.add_argument('image_dir', type=str)
+        parser.add_argument('output_dir', type=str)
+        return parser.parse_args()
+    
     args = parse_arguments()
     main(input_size=args.input_size,
          annotation_fp=args.annotation_fp,
