@@ -21,6 +21,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import argparse
 
 import tensorflow as tf
 from src.mtcnn import train_net, ONet
@@ -31,7 +32,7 @@ def train_Onet(training_data, base_lr, loss_weight,
                load_model=False, load_filename=None,
                save_model=False, save_filename=None,
                num_iter_to_save=10000,
-               device='/cpu:0', gpu_memory_fraction=1):
+               device='/cpu:0', gpu_memory_fraction=1.0):
 
     pnet = tf.Graph()
     with pnet.as_default():
@@ -51,11 +52,17 @@ def train_Onet(training_data, base_lr, loss_weight,
 
 
 if __name__ == '__main__':
+    def parse_arguments():
+        parser = argparse.ArgumentParser()
+        parser.add_argument('onet_pretrained_weights_fp', type=str)
+        parser.add_argument('output_model_fp', type=str)
+        parser.add_argument('classifier_tfrecord_fp', type=str)
+        parser.add_argument('localizer_tfrecord_fp', type=str)
+        return parser.parse_args()
 
-    load_filename = './pretrained/initial_weight_onet.npy'
-    save_filename = './save_model/new_saver/onet/onet'
-    training_data = ['./prepare_data/onet_data_for_cls.tfrecords',
-                     './prepare_data/onet_data_for_bbx.tfrecords']
+    args = parse_arguments()
+    training_data = [args.classifier_tfrecord_fp,
+                     args.localizer_tfrecord_fp]
     device = '/gpu:0'
     train_Onet(training_data=training_data,
                base_lr=0.0001,
@@ -63,9 +70,9 @@ if __name__ == '__main__':
                train_mode=2,
                num_epochs=[100, None, None],
                load_model=False,
-               load_filename=load_filename,
+               load_filename=args.onet_pretrained_weights_fp,
                save_model=True,
-               save_filename=save_filename,
-               num_iter_to_save=50000,
+               save_filename=args.output_model_fp,
+               num_iter_to_save=5000,
                device=device,
-               gpu_memory_fraction=0.6)
+               gpu_memory_fraction=1.0)
