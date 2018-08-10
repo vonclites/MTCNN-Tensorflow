@@ -24,7 +24,8 @@ gen_shuffle_data.py and tf_gen_24net_hard_example.py."""
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+import argparse
+import os
 import sys
 import random
 
@@ -38,35 +39,32 @@ from tools import view_bar, bytes_feature
 sys.path.append('../')
 
 
-def main():
-
-    size = 48
-    net = str(size)
-    with open('%s/pos_%s.txt' % (net, size), 'r') as f:
+def main(input_size, classifier_tfrecord_fp, localizer_tfrecord_fp, root_data_dir):
+    net = os.path.join(root_data_dir, str(input_size))
+    with open('%s/pos_%s.txt' % (net, input_size), 'r') as f:
         pos_hard = f.readlines()
-    with open('%s/neg_%s.txt' % (net, size), 'r') as f:
+    with open('%s/neg_%s.txt' % (net, input_size), 'r') as f:
         neg_hard = f.readlines()
-    with open('%s/part_%s.txt' % (net, size), 'r') as f:
+    with open('%s/part_%s.txt' % (net, input_size), 'r') as f:
         part_hard = f.readlines()
-    with open('native_'+'%s/pos_%s.txt' % (net, size), 'r') as f:
+    with open(os.path.join(root_data_dir, 'native_'+'%s/pos_%s.txt' % (input_size, input_size)), 'r') as f:
         pos = f.readlines()
-    with open('native_'+'%s/neg_%s.txt' % (net, size), 'r') as f:
+    with open(os.path.join(root_data_dir, 'native_'+'%s/neg_%s.txt' % (input_size, input_size)), 'r') as f:
         neg = f.readlines()
-    with open('native_'+'%s/part_%s.txt' % (net, size), 'r') as f:
+    with open(os.path.join(root_data_dir, 'native_'+'%s/part_%s.txt' % (input_size, input_size)), 'r') as f:
         part = f.readlines()
 
     print('\n'+'positive hard')
     cur_ = 0
     sum_ = len(pos_hard)
-    filename_cls = 'onet_data_for_cls.tfrecords'
     print('Writing')
     examples = []
-    writer = tf.python_io.TFRecordWriter(filename_cls)
+    writer = tf.python_io.TFRecordWriter(classifier_tfrecord_fp)
     for line in pos_hard:
         view_bar(cur_, sum_)
         cur_ += 1
         words = line.split()
-        image_file_name = words[0]+'.jpg'
+        image_file_name = words[0]
         im = cv2.imread(image_file_name)
         h, w, ch = im.shape
         if h != 48 or w != 48:
@@ -83,7 +81,7 @@ def main():
 
     print('\n'+'positive random cropped')
     cur_ = 0
-    pos_keep = npr.choice(len(pos), size=2000000, replace=False)
+    pos_keep = npr.choice(len(pos), size=min(len(pos), 2000000), replace=False)
     sum_ = len(pos_keep)
     print('Writing')
     for i in pos_keep:
@@ -91,7 +89,7 @@ def main():
         cur_ += 1
         line = pos[i]
         words = line.split()
-        image_file_name = words[0]+'.jpg'
+        image_file_name = words[0]
         im = cv2.imread(image_file_name)
         h, w, ch = im.shape
         if h != 48 or w != 48:
@@ -108,14 +106,14 @@ def main():
 
     print('\n'+'negative random cropped')
     cur_ = 0
-    neg_keep = npr.choice(len(neg), size=300000, replace=False)
+    neg_keep = npr.choice(len(neg), size=min(len(neg), 300000), replace=False)
     sum_ = len(neg_keep)
     for i in neg_keep:
         view_bar(cur_, sum_)
         cur_ += 1
         line = neg[i]
         words = line.split()
-        image_file_name = words[0]+'.jpg'
+        image_file_name = words[0]
         im = cv2.imread(image_file_name)
         h, w, ch = im.shape
         if h != 48 or w != 48:
@@ -137,7 +135,7 @@ def main():
         view_bar(cur_, sum_)
         cur_ += 1
         words = line.split()
-        image_file_name = words[0]+'.jpg'
+        image_file_name = words[0]
         im = cv2.imread(image_file_name)
         h, w, ch = im.shape
         if h != 48 or w != 48:
@@ -159,17 +157,16 @@ def main():
 
     print('\n'+'positive random cropped')
     cur_ = 0
-    filename_roi = 'onet_data_for_bbx.tfrecords'
     print('Writing')
     sum_ = len(pos_keep)
     examples = []
-    writer = tf.python_io.TFRecordWriter(filename_roi)
+    writer = tf.python_io.TFRecordWriter(localizer_tfrecord_fp)
     for i in pos_keep:
         view_bar(cur_, sum_)
         cur_ += 1
         line = pos[i]
         words = line.split()
-        image_file_name = words[0]+'.jpg'
+        image_file_name = words[0]
         im = cv2.imread(image_file_name)
         h, w, ch = im.shape
         if h != 48 or w != 48:
@@ -194,7 +191,7 @@ def main():
         view_bar(cur_, sum_)
         cur_ += 1
         words = line.split()
-        image_file_name = words[0]+'.jpg'
+        image_file_name = words[0]
         im = cv2.imread(image_file_name)
         h, w, ch = im.shape
         if h != 48 or w != 48:
@@ -218,7 +215,7 @@ def main():
         view_bar(cur_, sum_)
         cur_ += 1
         words = line.split()
-        image_file_name = words[0]+'.jpg'
+        image_file_name = words[0]
         im = cv2.imread(image_file_name)
         h, w, ch = im.shape
         if h != 48 or w != 48:
@@ -237,14 +234,14 @@ def main():
 
     print('\n'+'part random cropped')
     cur_ = 0
-    part_keep = npr.choice(len(part), size=100000, replace=False)
+    part_keep = npr.choice(len(part), size=min(len(part), 100000), replace=False)
     sum_ = len(part_keep)
     for i in part_keep:
         view_bar(cur_, sum_)
         line = part[i]
         cur_ += 1
         words = line.split()
-        image_file_name = words[0]+'.jpg'
+        image_file_name = words[0]
         im = cv2.imread(image_file_name)
         h, w, ch = im.shape
         if h != 48 or w != 48:
@@ -264,8 +261,22 @@ def main():
     random.shuffle(examples)
     for example in examples:
         writer.write(example.SerializeToString())
+
     writer.close()
 
 
 if __name__ == '__main__':
-    main()
+    def parse_arguments():
+        parser = argparse.ArgumentParser()
+        parser.add_argument('input_size', type=int,
+                            help='The input size for specific net')
+        parser.add_argument('classifier_tfrecord_fp', type=str)
+        parser.add_argument('localizer_tfrecord_fp', type=str)
+        parser.add_argument('root_data_dir', type=str)
+        return parser.parse_args()
+
+    args = parse_arguments()
+    main(input_size=args.input_size,
+         classifier_tfrecord_fp=args.classifier_tfrecord_fp,
+         localizer_tfrecord_fp=args.localizer_tfrecord_fp,
+         root_data_dir=args.root_data_dir)

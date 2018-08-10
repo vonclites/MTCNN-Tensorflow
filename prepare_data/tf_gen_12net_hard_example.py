@@ -36,12 +36,9 @@ from src.mtcnn import PNet
 sys.path.append('../')
 
 
-def main(args):
-
+def main(annotation_fp, image_dir, model_fp, output_dir):
     image_size = 24
-    save_dir = str(image_size)
-    anno_file = 'wider_face_train.txt'
-    im_dir = 'WIDER_train/images/'
+    save_dir = os.path.join(output_dir, str(image_size))
 
     neg_save_dir = save_dir+'/negative'
     pos_save_dir = save_dir+'/positive'
@@ -59,7 +56,7 @@ def main(args):
     f2 = open(save_dir+'/neg_24.txt', 'w')
     f3 = open(save_dir+'/part_24.txt', 'w')
     threshold = 0.6
-    with open(anno_file, 'r') as f:
+    with open(annotation_fp, 'r') as f:
         annotations = f.readlines()
     num = len(annotations)
     print('%d pics in total' % num)
@@ -71,7 +68,6 @@ def main(args):
     with tf.device('/gpu:0'):
         minsize = 20
         factor = 0.709
-        model_file = args.pnet_model
         with tf.Graph().as_default():
             config = tf.ConfigProto(allow_soft_placement=True)
             config.gpu_options.per_process_gpu_memory_fraction = 0.5
@@ -82,7 +78,7 @@ def main(args):
                 init_op = tf.global_variables_initializer()
                 sess.run(init_op)
                 saver = tf.train.Saver()
-                saver.restore(sess, model_file)
+                saver.restore(sess, model_fp)
 
                 def pnet_fun(img): return sess.run(
                     out_tensor, feed_dict={image: img})
@@ -91,10 +87,9 @@ def main(args):
                     annotation = annotation.strip().split(' ')
                     bbox = list(map(float, annotation[1:]))
                     gts = np.array(bbox, dtype=np.float32).reshape(-1, 4)
-                    img_path = im_dir + annotation[0] + '.jpg'
+                    img_path = os.path.join(image_dir, annotation[0])
                     img = cv2.imread(img_path)
-                    rectangles = detect_face_12net(img, minsize, pnet_fun,
-                                                   threshold, factor)
+                    rectangles = detect_face_12net(img, minsize, pnet_fun, threshold, factor)
                     image_idx += 1
 
                     view_bar(image_idx, num)
@@ -109,24 +104,23 @@ def main(args):
                         if crop_w < image_size or crop_h < image_size:
                             continue
 
-                        Iou = IoU(box, gts)
+                        iou = IoU(box, gts)
                         cropped_im = img[y_top: y_bottom+1, x_left: x_right+1]
                         resized_im = cv2.resize(cropped_im,
                                                 (image_size, image_size),
                                                 interpolation=cv2.INTER_LINEAR)
 
                         # save negative images and write label
-                        if np.max(Iou) < 0.3:
+                        if np.max(iou) < 0.3:
+                            filename = str(n_idx) + '.jpg'
                             # Iou with all gts must below 0.3
-                            save_file = os.path.join(neg_save_dir,
-                                                     '%s.jpg' % n_idx)
-                            f2.write('%s/negative/%s' %
-                                     (save_dir, n_idx) + ' 0\n')
+                            save_file = os.path.join(neg_save_dir, filename)
+                            f2.write(os.path.join(neg_save_dir, filename) + ' 0\n')
                             cv2.imwrite(save_file, resized_im)
                             n_idx += 1
                         else:
                             # find gt_box with the highest iou
-                            idx = np.argmax(Iou)
+                            idx = np.argmax(iou)
                             assigned_gt = gts[idx]
                             x1, y1, x2, y2 = assigned_gt
 
@@ -136,23 +130,21 @@ def main(args):
                             offset_x2 = (x2 - x_right) / float(crop_w)
                             offset_y2 = (y2 - y_bottom) / float(crop_h)
 
-                            if np.max(Iou) >= 0.65:
-                                save_file = os.path.join(pos_save_dir,
-                                                         '%s.jpg' % p_idx)
-                                f1.write('%s/positive/%s' % (save_dir, p_idx) +
+                            if np.max(iou) >= 0.65:
+                                filename = str(p_idx) + '.jpg'
+                                save_file = os.path.join(pos_save_dir, filename)
+                                f1.write(os.path.join(pos_save_dir, filename) +
                                          ' 1 %.2f %.2f %.2f %.2f\n' %
-                                         (offset_x1, offset_y1,
-                                          offset_x2, offset_y2))
+                                         (offset_x1, offset_y1, offset_x2, offset_y2))
                                 cv2.imwrite(save_file, resized_im)
                                 p_idx += 1
 
-                            elif np.max(Iou) >= 0.4:
-                                save_file = os.path.join(part_save_dir,
-                                                         '%s.jpg' % d_idx)
-                                f3.write('%s/part/%s' % (save_dir, d_idx) +
+                            elif np.max(iou) >= 0.4:
+                                filename = str(d_idx) + '.jpg'
+                                save_file = os.path.join(part_save_dir, filename)
+                                f3.write(os.path.join(part_save_dir, filename) +
                                          ' -1 %.2f %.2f %.2f %.2f\n' %
-                                         (offset_x1, offset_y1,
-                                          offset_x2, offset_y2))
+                                         (offset_x1, offset_y1, offset_x2, offset_y2))
                                 cv2.imwrite(save_file, resized_im)
                                 d_idx += 1
 
@@ -161,16 +153,17 @@ def main(args):
     f3.close()
 
 
-def parse_arguments(argv):
-
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--pnet_model', type=str,
-                        help='The path of pnet model to generate hard example',
-                        default='../save_model/seperate_net/pnet/pnet-3000000')
-
-    return parser.parse_args(argv)
-
-
 if __name__ == '__main__':
-    main(parse_arguments(sys.argv[1:]))
+    def parse_arguments():
+        parser = argparse.ArgumentParser()
+        parser.add_argument('annotation_fp', type=str)
+        parser.add_argument('image_dir', type=str)
+        parser.add_argument('pnet_model_fp', type=str)
+        parser.add_argument('output_dir', type=str)
+        return parser.parse_args()
+
+    args = parse_arguments()
+    main(annotation_fp=args.annotation_fp,
+         image_dir=args.image_dir,
+         model_fp=args.pnet_model_fp,
+         output_dir=args.output_dir)
