@@ -49,7 +49,6 @@ def layer(op):
 
 
 class NetWork(object):
-
     def __init__(self, inputs, trainable=True,
                  weight_decay_coeff=4e-3, mode='train'):
 
@@ -69,7 +68,6 @@ class NetWork(object):
             self.setup()
 
     def setup_training_graph(self):
-
         for index, task in enumerate(self.tasks):
             self.weight_decay[task] = []
             reuse_bool = False
@@ -78,11 +76,9 @@ class NetWork(object):
             self.setup(task=task, reuse=reuse_bool)
 
     def setup(self, task='data'):
-
         raise NotImplementedError('Must be implemented by the subclass.')
 
     def load(self, data_path, session, prefix, ignore_missing=False):
-
         data_dict = np.load(data_path, encoding='latin1').item()
         for op_name in data_dict:
             with tf.variable_scope(prefix + op_name, reuse=True):
@@ -95,7 +91,6 @@ class NetWork(object):
                             raise
 
     def feed(self, *args):
-
         assert len(args) != 0
         self.terminals = []
         for fed_layer in args:
@@ -108,25 +103,20 @@ class NetWork(object):
         return self
 
     def get_output(self):
-
         return self.terminals[-1]
 
     def get_all_output(self):
-
         return self.out_put
 
     def get_weight_decay(self):
-
         assert self.mode == 'train'
         return self.weight_decay
 
     def get_unique_name(self, prefix):
-
         ident = sum(t.startswith(prefix) for t, _ in self.layers.items()) + 1
         return '%s_%d' % (prefix, ident)
 
     def make_var(self, name, shape):
-
         return tf.get_variable(
             name,
             shape,
@@ -135,7 +125,6 @@ class NetWork(object):
                 stddev=1e-4))
 
     def validate_padding(self, padding):
-
         assert padding in ('SAME', 'VALID')
 
     @layer
@@ -174,7 +163,6 @@ class NetWork(object):
 
     @layer
     def prelu(self, inp, name):
-
         with tf.variable_scope(name):
             i = int(inp.get_shape()[-1])
             alpha = self.make_var('alpha', shape=(i,))
@@ -183,7 +171,6 @@ class NetWork(object):
     @layer
     def max_pool(self, input, k_h, k_w, s_h, s_w, name,
                  padding='SAME'):
-
         self.validate_padding(padding)
         return tf.nn.max_pool(input,
                               ksize=[1, k_h, k_w, 1],
@@ -193,7 +180,6 @@ class NetWork(object):
 
     @layer
     def fc(self, inp, num_out, name, task=None, relu=True, wd=None):
-
         with tf.variable_scope(name):
             input_shape = inp.get_shape()
             if input_shape.ndims == 4:
@@ -213,53 +199,21 @@ class NetWork(object):
 
     @layer
     def softmax(self, target, name=None):
-
         with tf.variable_scope(name):
             return tf.nn.softmax(target, name=name)
 
 
 class PNet(NetWork):
-
     def setup(self, task='data', reuse=False):
-
         with tf.variable_scope('pnet', reuse=reuse):
-            (
-                self.feed(task) .conv(
-                    3,
-                    3,
-                    10,
-                    1,
-                    1,
-                    padding='VALID',
-                    relu=False,
-                    name='conv1') .prelu(
-                    name='PReLU1') .max_pool(
-                    2,
-                    2,
-                    2,
-                    2,
-                    name='pool1') .conv(
-                    3,
-                    3,
-                    16,
-                    1,
-                    1,
-                    padding='VALID',
-                    relu=False,
-                    name='conv2') .prelu(
-                        name='PReLU2') .conv(
-                            3,
-                            3,
-                            32,
-                            1,
-                            1,
-                            task=task,
-                            padding='VALID',
-                            relu=False,
-                            name='conv3',
-                            wd=self.weight_decay_coeff) .prelu(
-                                name='PReLU3'))
-
+            (self.feed('data')  # pylint: disable=no-value-for-parameter, no-member
+             .conv(3, 3, 10, 1, 1, padding='VALID', relu=False, name='conv1')
+             .prelu(name='PReLU1')
+             .max_pool(2, 2, 2, 2, name='pool1')
+             .conv(3, 3, 16, 1, 1, padding='VALID', relu=False, name='conv2')
+             .prelu(name='PReLU2')
+             .conv(3, 3, 32, 1, 1, padding='VALID', relu=False, name='conv3')
+             .prelu(name='PReLU3'))
         if self.mode == 'train':
             if task == 'cls':
                 (self.feed('PReLU3')
@@ -282,61 +236,25 @@ class PNet(NetWork):
             (self.feed('PReLU3')
                  .conv(1, 1, 4, 1, 1, relu=False, name='pnet/conv4-2'))
             self.out_put.append(self.get_output())
+            (self.feed('PReLU3')
+             .conv(1, 1, 10, 1, 1, relu=False, name='pnet/conv4-3'))
+            self.out_put.append(self.get_output())
 
 
 class RNet(NetWork):
-
     def setup(self, task='data', reuse=False):
-
         with tf.variable_scope('rnet', reuse=reuse):
-            (
-                self.feed(task) .conv(
-                    3,
-                    3,
-                    28,
-                    1,
-                    1,
-                    padding='VALID',
-                    relu=False,
-                    name='conv1') .prelu(
-                    name='prelu1') .max_pool(
-                    3,
-                    3,
-                    2,
-                    2,
-                    name='pool1') .conv(
-                    3,
-                    3,
-                    48,
-                    1,
-                    1,
-                    padding='VALID',
-                    relu=False,
-                    name='conv2') .prelu(
-                        name='prelu2') .max_pool(
-                            3,
-                            3,
-                            2,
-                            2,
-                            padding='VALID',
-                            name='pool2') .conv(
-                                2,
-                                2,
-                                64,
-                                1,
-                                1,
-                                padding='VALID',
-                                task=task,
-                                relu=False,
-                                name='conv3',
-                                wd=self.weight_decay_coeff) .prelu(
-                                    name='prelu3') .fc(
-                                        128,
-                                        task=task,
-                                        relu=False,
-                                        name='conv4',
-                                        wd=self.weight_decay_coeff) .prelu(
-                                            name='prelu4'))
+            (self.feed('data')  # pylint: disable=no-value-for-parameter, no-member
+             .conv(3, 3, 28, 1, 1, padding='VALID', relu=False, name='conv1')
+             .prelu(name='prelu1')
+             .max_pool(3, 3, 2, 2, name='pool1')
+             .conv(3, 3, 48, 1, 1, padding='VALID', relu=False, name='conv2')
+             .prelu(name='prelu2')
+             .max_pool(3, 3, 2, 2, padding='VALID', name='pool2')
+             .conv(2, 2, 64, 1, 1, padding='VALID', relu=False, name='conv3')
+             .prelu(name='prelu3')
+             .fc(128, relu=False, name='conv4')
+             .prelu(name='prelu4'))
 
         if self.mode == 'train':
             if task == 'cls':
@@ -360,71 +278,28 @@ class RNet(NetWork):
             (self.feed('prelu4')
                  .fc(4, relu=False, name='rnet/conv5-2'))
             self.out_put.append(self.get_output())
+            (self.feed('prelu4')
+                 .fc(10, relu=False, name='rnet/conv5-3'))
+            self.out_put.append(self.get_output())
 
 
 class ONet(NetWork):
-
     def setup(self, task='data', reuse=False):
-
         with tf.variable_scope('onet', reuse=reuse):
-            (
-                self.feed(task) .conv(
-                    3,
-                    3,
-                    32,
-                    1,
-                    1,
-                    padding='VALID',
-                    relu=False,
-                    name='conv1') .prelu(
-                    name='prelu1') .max_pool(
-                    3,
-                    3,
-                    2,
-                    2,
-                    name='pool1') .conv(
-                    3,
-                    3,
-                    64,
-                    1,
-                    1,
-                    padding='VALID',
-                    relu=False,
-                    name='conv2') .prelu(
-                        name='prelu2') .max_pool(
-                            3,
-                            3,
-                            2,
-                            2,
-                            padding='VALID',
-                            name='pool2') .conv(
-                                3,
-                                3,
-                                64,
-                                1,
-                                1,
-                                padding='VALID',
-                                relu=False,
-                                name='conv3') .prelu(
-                                    name='prelu3') .max_pool(
-                                        2,
-                                        2,
-                                        2,
-                                        2,
-                                        name='pool3') .conv(
-                                            2,
-                                            2,
-                                            128,
-                                            1,
-                                            1,
-                                            padding='VALID',
-                                            relu=False,
-                                            name='conv4') .prelu(
-                                                name='prelu4') .fc(
-                                                    256,
-                                                    relu=False,
-                                                    name='conv5') .prelu(
-                                                        name='prelu5'))
+            (self.feed('data')  # pylint: disable=no-value-for-parameter, no-member
+             .conv(3, 3, 32, 1, 1, padding='VALID', relu=False, name='conv1')
+             .prelu(name='prelu1')
+             .max_pool(3, 3, 2, 2, name='pool1')
+             .conv(3, 3, 64, 1, 1, padding='VALID', relu=False, name='conv2')
+             .prelu(name='prelu2')
+             .max_pool(3, 3, 2, 2, padding='VALID', name='pool2')
+             .conv(3, 3, 64, 1, 1, padding='VALID', relu=False, name='conv3')
+             .prelu(name='prelu3')
+             .max_pool(2, 2, 2, 2, name='pool3')
+             .conv(2, 2, 128, 1, 1, padding='VALID', relu=False, name='conv4')
+             .prelu(name='prelu4')
+             .fc(256, relu=False, name='conv5')
+             .prelu(name='prelu5'))
 
         if self.mode == 'train':
             if task == 'cls':
@@ -454,7 +329,6 @@ class ONet(NetWork):
 
 
 def read_and_decode(filename_queue, label_type, shape):
-
     reader = tf.TFRecordReader()
     _, serialized_example = reader.read(filename_queue)
     features = tf.parse_single_example(
@@ -479,12 +353,10 @@ def read_and_decode(filename_queue, label_type, shape):
         label.set_shape([4])
     elif label_type == 'pts':
         label.set_shape([10])
-
     return image, label
 
 
 def inputs(filename, batch_size, num_epochs, label_type, shape):
-
     with tf.device('/cpu:0'):
         if not num_epochs:
             num_epochs = None
@@ -499,7 +371,6 @@ def inputs(filename, batch_size, num_epochs, label_type, shape):
             [image, label], batch_size=batch_size, num_threads=2,
             capacity=1000 + 3 * batch_size,
             min_after_dequeue=1000)
-
         return images, sparse_labels
 
 
@@ -595,7 +466,7 @@ def train_net(Net, training_data, base_lr, loss_weight,
 
     with tf.Session(config=config) as sess:
         sess.run(init_op)
-        saver = tf.train.Saver(max_to_keep=200000)
+        saver = tf.train.Saver(max_to_keep=5)
         if load_model:
             saver.restore(sess, load_filename)
         else:
