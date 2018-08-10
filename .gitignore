@@ -1,3 +1,9 @@
 \.idea/
 
 __pycache__/
+
+save_model/separate/onet/\.DS_Store
+
+save_model/separate/\.DS_Store
+
+save_model/separate/pnet/\.DS_Store
