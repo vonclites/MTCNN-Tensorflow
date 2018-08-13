@@ -44,9 +44,13 @@ def main(input_size, classifier_tfrecord_fp, localizer_tfrecord_fp, root_data_di
         neg = f.readlines()
     with open('%s/part_%s.txt' % (net, input_size), 'r') as f:
         part_hard = f.readlines()
-    with open(os.path.join(root_data_dir, 'native_'+'%s/pos_%s.txt' % (input_size, input_size)), 'r') as f:
+    with open(os.path.join(root_data_dir,
+                           'native_'+'%s/pos_%s.txt'
+                           % (input_size, input_size)), 'r') as f:
         pos = f.readlines()
-    with open(os.path.join(root_data_dir, 'native_'+'%s/part_%s.txt' % (input_size, input_size)), 'r') as f:
+    with open(os.path.join(root_data_dir,
+                           'native_'+'%s/part_%s.txt'
+                           % (input_size, input_size)), 'r') as f:
         part = f.readlines()
 
     print('\n'+'positive hard')

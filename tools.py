@@ -30,7 +30,6 @@ import cv2
 
 
 def view_bar(num, total):
-
     rate = float(num) / total
     rate_num = int(rate * 100) + 1
     r = '\r[%s%s]%d%%' % ("#" * rate_num, " " * (100 - rate_num), rate_num, )
@@ -39,17 +38,14 @@ def view_bar(num, total):
 
 
 def int64_feature(value):
-
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
 
 def bytes_feature(value):
-
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
 def get_model_filenames(model_dir):
-
     files = os.listdir(model_dir)
     pnet = [s for s in files if 'pnet' in s and
                                 os.path.isdir(os.path.join(model_dir, s))]
@@ -71,7 +67,6 @@ def get_model_filenames(model_dir):
 
 
 def get_meta_data(model_dir):
-
     files = os.listdir(model_dir)
     meta_files = [s for s in files if s.endswith('.meta')]
     if len(meta_files) == 0:
@@ -95,7 +90,6 @@ def get_meta_data(model_dir):
 
 
 def detect_face(img, minsize, pnet, rnet, onet, threshold, factor):
-
     factor_count = 0
     total_boxes = np.empty((0, 9))
     points = []

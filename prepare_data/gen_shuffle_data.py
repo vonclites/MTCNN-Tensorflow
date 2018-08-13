@@ -162,7 +162,7 @@ if __name__ == '__main__':
         parser.add_argument('image_dir', type=str)
         parser.add_argument('output_dir', type=str)
         return parser.parse_args()
-    
+
     args = parse_arguments()
     main(input_size=args.input_size,
          annotation_fp=args.annotation_fp,
