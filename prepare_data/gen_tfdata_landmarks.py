@@ -1,7 +1,6 @@
 import os
+import cv2
 import numpy as np
-from skimage.io import imread
-from skimage.transform import resize
 import argparse
 import tensorflow as tf
 
@@ -16,27 +15,28 @@ def write_tfrecord(input_size, annotation_fp, image_dir, tfrecord_fp):
         elements = annotation.split(' ')
         filename = elements[0]
         bbox = [int(_) for _ in elements[1:5]]
-        landmarks = np.array([int(_) for _ in elements[5:]], dtype=np.float32)
-        image = imread(os.path.join(image_dir, filename))
+        landmarks = np.array([int(_) for _ in elements[5:]], dtype='float32')
+        image = cv2.imread(os.path.join(image_dir, filename))
 
         image = image[bbox[1]:bbox[3], bbox[0]:bbox[2]]
-        cropped_height, cropped_width = image.shape
+        cropped_height, cropped_width, _ = image.shape
 
         # Relocate landmarks to account for image cropping
         landmarks[::2] = landmarks[::2] - bbox[0]  # Subtract offset from x's
         landmarks[1::2] = landmarks[1::2] - bbox[1]  # Subtract offset from y's
 
-        image = resize(image, (input_size, input_size))
+        image = cv2.resize(image, (input_size, input_size))
+        image = image.astype('uint8')
 
         # Relocate landmarks to account for image resizing
         landmarks[::2] = landmarks[::2] / cropped_width * input_size
         landmarks[1::2] = landmarks[1::2] / cropped_height * input_size
 
         example = tf.train.Example(features=tf.train.Features(feature={
-            'label_raw': tf.train.Feature(
-                bytes_list=tf.train.BytesList(value=[landmarks.tostring()])),
             'image_raw': tf.train.Feature(
-                bytes_list=tf.train.BytesList(value=[image.tostring()]))
+                bytes_list=tf.train.BytesList(value=[image.tostring()])),
+            'label_raw': tf.train.Feature(
+                bytes_list=tf.train.BytesList(value=[landmarks.tostring()]))
         }))
         examples.append(example)
 
