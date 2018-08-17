@@ -116,6 +116,10 @@ def detect_face(img, minsize, pnet, rnet, onet, threshold, factor):
         out = pnet(img_x)
         out0 = out[0]
         out1 = out[1]
+
+        '''9 values relate to coordinates of window corresponding to the
+        highest scoring face region, plus that score, plus the predicted
+        bbox offsets for use in adjusting the window coordinates'''
         boxes, _ = generateBoundingBox(out0[0, :, :, 1].copy(),
                                        out1[0, :, :, :].copy(),
                                        scale,
@@ -203,25 +207,33 @@ def detect_face(img, minsize, pnet, rnet, onet, threshold, factor):
                                  np.expand_dims(score[ipass].copy(), 1)])
         mv = out1[:, ipass[0]]
 
-        w = total_boxes[:, 2] - total_boxes[:, 0] + 1
-        h = total_boxes[:, 3] - total_boxes[:, 1] + 1
-        points[0:10:2, :] = np.tile(w, (5, 1)) * \
-            (points[0:10:2, :] + 1) / 2 + \
-            np.tile(total_boxes[:, 0], (5, 1)) - 1
-        points[1:11:2, :] = np.tile(h, (5, 1)) * \
-            (points[1:11:2, :] + 1) / 2 + \
-            np.tile(total_boxes[:, 1], (5, 1)) - 1
+        w = total_boxes[:, 2] - total_boxes[:, 0]
+        h = total_boxes[:, 3] - total_boxes[:, 1]
+
+        '''Convert point from 48x48 space to size of candidate window
+         relative to the dimensions of the original image'''
+        points[0:10:2, :] = points[0:10:2, :] / 48 * w
+        points[1:11:2, :] = points[1:11:2, :] / 48 * h
+
+        # Original authors code
+        # points[0:10:2, :] = np.tile(w, (5, 1)) * \
+        #     (points[0:10:2, :] + 1) / 2 + \
+        #     np.tile(total_boxes[:, 0], (5, 1)) - 1
+        # points[1:11:2, :] = np.tile(h, (5, 1)) * \
+        #     (points[1:11:2, :] + 1) / 2 + \
+        #     np.tile(total_boxes[:, 1], (5, 1)) - 1
         if total_boxes.shape[0] > 0:
             total_boxes = bbreg(total_boxes.copy(), np.transpose(mv))
             pick = nms(total_boxes.copy(), 0.7, 'Min')
             total_boxes = total_boxes[pick, :]
             points = points[:, pick]
-
+            '''Offset points based on the x, y offsets of the bbox'''
+            points[0:10:2, :] = points[0:10:2, :] + total_boxes[:, 0]
+            points[1:10:2, :] = points[1:10:2, :] + total_boxes[:, 1]
     return total_boxes, points
 
 
 def detect_face_12net(img, minsize, pnet, threshold, factor):
-
     factor_count = 0
     total_boxes = np.empty((0, 9))
     h = img.shape[0]
@@ -275,7 +287,6 @@ def detect_face_12net(img, minsize, pnet, threshold, factor):
 
 
 def detect_face_24net(img, minsize, pnet, rnet, threshold, factor):
-
     factor_count = 0
     total_boxes = np.empty((0, 9))
     h = img.shape[0]
@@ -360,7 +371,6 @@ def detect_face_24net(img, minsize, pnet, rnet, threshold, factor):
 
 
 def nms(boxes, threshold, method):
-
     if boxes.size == 0:
         return np.empty((0, 3))
     x1 = boxes[:, 0]
@@ -394,7 +404,6 @@ def nms(boxes, threshold, method):
 
 
 def bbreg(boundingbox, reg):
-
     if reg.shape[1] == 1:
         reg = np.reshape(reg, (reg.shape[2], reg.shape[3]))
 
@@ -409,7 +418,6 @@ def bbreg(boundingbox, reg):
 
 
 def generateBoundingBox(imap, reg, scale, t):
-
     stride = 2
     cellsize = 12
 
@@ -425,11 +433,15 @@ def generateBoundingBox(imap, reg, scale, t):
         dx2 = np.flipud(dx2)
         dy2 = np.flipud(dy2)
     score = imap[(y, x)]
+
+    # bbox adjustments to coordinates of predicted face windows
     reg = np.transpose(np.vstack([dx1[(y, x)], dy1[(y, x)],
                                   dx2[(y, x)], dy2[(y, x)]]))
     if reg.size == 0:
         reg = np.empty((0, 3))
     bb = np.transpose(np.vstack([y, x]))
+
+    # Rescale back to original image space
     q1 = np.fix((stride * bb + 1) / scale)
     q2 = np.fix((stride * bb + cellsize - 1 + 1) / scale)
     boundingbox = np.hstack([q1, q2, np.expand_dims(score, 1), reg])
@@ -437,7 +449,6 @@ def generateBoundingBox(imap, reg, scale, t):
 
 
 def pad(total_boxes, w, h):
-
     tmpw = (total_boxes[:, 2] - total_boxes[:, 0] + 1).astype(np.int32)
     tmph = (total_boxes[:, 3] - total_boxes[:, 1] + 1).astype(np.int32)
     numbox = total_boxes.shape[0]
@@ -472,7 +483,6 @@ def pad(total_boxes, w, h):
 
 
 def rerec(bboxA):
-
     h = bboxA[:, 3] - bboxA[:, 1]
     w = bboxA[:, 2] - bboxA[:, 0]
     size = np.maximum(w, h)
@@ -483,13 +493,11 @@ def rerec(bboxA):
 
 
 def imresample(img, sz):
-
     im_data = cv2.resize(img, (sz[1], sz[0]), interpolation=cv2.INTER_AREA)
     return im_data
 
 
 def IoU(box, boxes):
-
     box_area = (box[2] - box[0] + 1) * (box[3] - box[1] + 1)
     area = (boxes[:, 2] - boxes[:, 0] + 1) * (boxes[:, 3] - boxes[:, 1] + 1)
     xx1 = np.maximum(box[0], boxes[:, 0])
@@ -507,7 +515,6 @@ def IoU(box, boxes):
 
 
 def convert_to_square(bbox):
-
     square_bbox = bbox.copy()
 
     h = bbox[:, 3] - bbox[:, 1] + 1
