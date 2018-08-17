@@ -29,9 +29,7 @@ import numpy as np
 
 
 def layer(op):
-
     def layer_decorated(self, *args, **kwargs):
-
         name = kwargs.setdefault('name', self.get_unique_name(op.__name__))
         if len(self.terminals) == 0:
             raise RuntimeError('No input variables found for layer %s.' % name)
@@ -51,7 +49,6 @@ def layer(op):
 class NetWork(object):
     def __init__(self, inputs, trainable=True,
                  weight_decay_coeff=4e-3, mode='train'):
-
         self.inputs = inputs
         self.terminals = []
         self.layers = dict(inputs)
@@ -206,7 +203,7 @@ class NetWork(object):
 class PNet(NetWork):
     def setup(self, task='data', reuse=False):
         with tf.variable_scope('pnet', reuse=reuse):
-            (self.feed('data')  # pylint: disable=no-value-for-parameter, no-member
+            (self.feed(task)  # pylint: disable=no-value-for-parameter, no-member
              .conv(3, 3, 10, 1, 1, padding='VALID', relu=False, name='conv1')
              .prelu(name='PReLU1')
              .max_pool(2, 2, 2, 2, name='pool1')
@@ -244,7 +241,7 @@ class PNet(NetWork):
 class RNet(NetWork):
     def setup(self, task='data', reuse=False):
         with tf.variable_scope('rnet', reuse=reuse):
-            (self.feed('data')  # pylint: disable=no-value-for-parameter, no-member
+            (self.feed(task)  # pylint: disable=no-value-for-parameter, no-member
              .conv(3, 3, 28, 1, 1, padding='VALID', relu=False, name='conv1')
              .prelu(name='prelu1')
              .max_pool(3, 3, 2, 2, name='pool1')
@@ -286,7 +283,7 @@ class RNet(NetWork):
 class ONet(NetWork):
     def setup(self, task='data', reuse=False):
         with tf.variable_scope('onet', reuse=reuse):
-            (self.feed('data')  # pylint: disable=no-value-for-parameter, no-member
+            (self.feed(task)  # pylint: disable=no-value-for-parameter, no-member
              .conv(3, 3, 32, 1, 1, padding='VALID', relu=False, name='conv1')
              .prelu(name='prelu1')
              .max_pool(3, 3, 2, 2, name='pool1')
