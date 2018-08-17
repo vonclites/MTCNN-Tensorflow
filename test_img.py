@@ -106,6 +106,7 @@ def main(args):
                 rectangles, points = detect_face(img, args.minsize,
                                                  pnet_fun, rnet_fun, onet_fun,
                                                  args.threshold, args.factor)
+
                 duration = time.time() - start_time
 
                 print(duration)
@@ -148,7 +149,7 @@ def parse_arguments(argv):
     parser.add_argument('--minsize', type=int,
                         help='The minimum size of face to detect.', default=20)
     parser.add_argument('--factor', type=float,
-                        help='The scale stride of orginal image', default=0.7)
+                        help='The scale stride of orIginal image', default=0.7)
     parser.add_argument('--save_image', type=bool,
                         help='Whether to save the result image', default=False)
     parser.add_argument('--save_name', type=str,
