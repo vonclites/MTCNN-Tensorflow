@@ -85,7 +85,7 @@ def main(annotation_fp, image_dir, model_fp, output_dir):
 
                 for annotation in annotations:
                     annotation = annotation.strip().split(' ')
-                    bbox = list(map(float, annotation[1:]))
+                    bbox = list(map(float, annotation[1:5]))
                     gts = np.array(bbox, dtype=np.float32).reshape(-1, 4)
                     img_path = os.path.join(image_dir, annotation[0])
                     img = cv2.imread(img_path)
