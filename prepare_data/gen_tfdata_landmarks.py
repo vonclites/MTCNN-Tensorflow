@@ -14,8 +14,9 @@ def write_tfrecord(input_size, annotation_fp, image_dir, tfrecord_fp):
     for annotation in annotations:
         elements = annotation.split(' ')
         filename = elements[0]
-        bbox = [int(_) for _ in elements[1:5]]
-        landmarks = np.array([int(_) for _ in elements[5:]], dtype='float32')
+        bbox = [int(float(_)) for _ in elements[1:5]]
+        landmarks = np.array([int(float(_)) for _ in elements[5:]],
+                             dtype='float32')
         image = cv2.imread(os.path.join(image_dir, filename))
 
         image = image[bbox[1]:bbox[3], bbox[0]:bbox[2]]
@@ -40,9 +41,9 @@ def write_tfrecord(input_size, annotation_fp, image_dir, tfrecord_fp):
         }))
         examples.append(example)
 
-        with tf.python_io.TFRecordWriter(tfrecord_fp) as writer:
-            for example in examples:
-                writer.write(example.SerializeToString())
+    with tf.python_io.TFRecordWriter(tfrecord_fp) as writer:
+        for example in examples:
+            writer.write(example.SerializeToString())
 
 
 if __name__ == '__main__':
