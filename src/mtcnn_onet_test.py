@@ -58,21 +58,24 @@ if __name__ == '__main__':
         parser.add_argument('output_model_fp', type=str)
         parser.add_argument('classifier_tfrecord_fp', type=str)
         parser.add_argument('localizer_tfrecord_fp', type=str)
+        parser.add_argument('landmarks_tfrecord_fp', type=str)
         return parser.parse_args()
+
 
     args = parse_arguments()
     training_data = [args.classifier_tfrecord_fp,
-                     args.localizer_tfrecord_fp]
+                     args.localizer_tfrecord_fp,
+                     args.landmarks_tfrecord_fp]
     device = '/gpu:0'
     train_Onet(training_data=training_data,
                base_lr=0.0001,
                loss_weight=[1.0, 0.5, 1.0],
-               train_mode=2,
-               num_epochs=[100, None, None],
+               train_mode=3,
+               num_epochs=[4000, 4000, 4000],
                load_model=False,
                load_filename=args.onet_pretrained_weights_fp,
                save_model=True,
                save_filename=args.output_model_fp,
-               num_iter_to_save=5000,
+               num_iter_to_save=500,
                device=device,
                gpu_memory_fraction=1.0)
