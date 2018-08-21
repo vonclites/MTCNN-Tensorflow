@@ -463,7 +463,7 @@ def train_net(Net, training_data, base_lr, loss_weight,
 
     with tf.Session(config=config) as sess:
         sess.run(init_op)
-        saver = tf.train.Saver(max_to_keep=5)
+        saver = tf.train.Saver(max_to_keep=1)
         if load_model:
             saver.restore(sess, load_filename)
         else:
