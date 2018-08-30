@@ -24,6 +24,7 @@
 
 import os
 import cv2
+import random
 import argparse
 import numpy as np
 import numpy.random as npr
@@ -51,7 +52,7 @@ def main(input_size, annotation_fp, image_dir, output_dir):
     f3 = open(os.path.join(save_dir, 'part_' + str(input_size) + '.txt'), 'w')
     with open(annotation_fp, 'r') as f:
         annotations = f.readlines()
-
+    random.shuffle(annotations)
     num = len(annotations)
     print('%d pics in total' % num)
     p_idx = 0  # positive
