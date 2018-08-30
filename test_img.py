@@ -32,10 +32,9 @@ from src.mtcnn import PNet, RNet, ONet
 from tools import detect_face, get_model_filenames
 
 
-def main(args):
-
-    img = cv2.imread(args.image_path)
-    file_paths = get_model_filenames(args.model_dir)
+def main(image_path, model_dir, thresholds, min_size, factor, save_image, save_name):
+    img = cv2.imread(image_path)
+    file_paths = get_model_filenames(model_dir)
     with tf.device('/gpu:0'):
         with tf.Graph().as_default():
             config = tf.ConfigProto(allow_soft_placement=True)
@@ -103,9 +102,9 @@ def main(args):
                             'Placeholder_2:0': img})
 
                 start_time = time.time()
-                rectangles, points = detect_face(img, args.minsize,
+                rectangles, points = detect_face(img, min_size,
                                                  pnet_fun, rnet_fun, onet_fun,
-                                                 args.threshold, args.factor)
+                                                 thresholds, factor)
 
                 duration = time.time() - start_time
 
@@ -123,41 +122,48 @@ def main(args):
                 for point in points:
                     for i in range(0, 10, 2):
                         cv2.circle(img, (int(point[i]), int(
-                            point[i + 1])), 2, (0, 255, 0))
-                cv2.imshow("test", img)
-                if args.save_image:
-                    cv2.imwrite(args.save_name, img)
-                if cv2.waitKey(0) & 0xFF == ord('q'):
-                    cv2.destroyAllWindows()
-
-
-def parse_arguments(argv):
-
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('image_path', type=str,
-                        help='The image path of the testing image')
-    parser.add_argument('--model_dir', type=str,
-                        help='The directory of trained model',
-                        default='./save_model/all_in_one/')
-    parser.add_argument(
-        '--threshold',
-        type=float,
-        nargs=3,
-        help='Three thresholds for pnet, rnet, onet, respectively.',
-        default=[0.8, 0.8, 0.8])
-    parser.add_argument('--minsize', type=int,
-                        help='The minimum size of face to detect.', default=20)
-    parser.add_argument('--factor', type=float,
-                        help='The scale stride of orIginal image', default=0.7)
-    parser.add_argument('--save_image', type=bool,
-                        help='Whether to save the result image', default=False)
-    parser.add_argument('--save_name', type=str,
-                        help='If save_image is true, specify the output path.',
-                        default='result.jpg')
-
-    return parser.parse_args(argv)
+                            point[i + 1])), 2, (0, 0, 255), thickness=2)
+                # cv2.imshow("test", img)
+                if save_image:
+                    cv2.imwrite(save_name, img)
+                # if cv2.waitKey(0) & 0xFF == ord('q'):
+                #     cv2.destroyAllWindows()
+                return rectangles, points
 
 
 if __name__ == '__main__':
-    main(parse_arguments(sys.argv[1:]))
+    def parse_arguments(argv):
+        parser = argparse.ArgumentParser()
+
+        parser.add_argument('image_path', type=str,
+                            help='The image path of the testing image')
+        parser.add_argument('--model_dir', type=str,
+                            help='The directory of trained model',
+                            default='./save_model/all_in_one/')
+        parser.add_argument(
+            '--thresholds',
+            type=float,
+            nargs=3,
+            help='Three thresholds for pnet, rnet, onet, respectively.',
+            default=[0.25, 0.25, 0.25])
+        parser.add_argument('--min_size', type=int,
+                            help='The minimum size of face to detect.', default=20)
+        parser.add_argument('--factor', type=float,
+                            help='The scale stride of orIginal image', default=0.7)
+        parser.add_argument('--save_image', type=bool,
+                            help='Whether to save the result image', default=False)
+        parser.add_argument('--save_name', type=str,
+                            help='If save_image is true, specify the output path.',
+                            default='result.jpg')
+
+        return parser.parse_args(argv)
+
+    args = parse_arguments(sys.argv[1:])
+
+    main(image_path=args.image_path,
+         model_dir=args.model_dir,
+         thresholds=args.thresholds,
+         min_size=args.min_size,
+         factor=args.factor,
+         save_image=args.save_image,
+         save_name=args.save_name)
