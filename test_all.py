@@ -46,7 +46,7 @@ def run(image_dir,
     print("Non-Detections: " + str(non_detections))
 
 
-run(image_dir='/home/matt/Desktop/MTCNN_thermal_data/images',
-    annotation_fp='/home/matt/Desktop/MTCNN_thermal_data/train_baseline_annotations.txt',
-    model_dir='/home/matt/Desktop/MTCNN_thermal_data/models',
-    output_dir='/home/matt/Desktop/thermal_train_results')
+run(image_dir='/home/matt/Desktop/MTCNN_thermal_16bit/images',
+    annotation_fp='/home/matt/Desktop/MTCNN_thermal_16bit/test_annotations.txt',
+    model_dir='/home/matt/Desktop/MTCNN_thermal_16bit/models',
+    output_dir='/home/matt/Desktop/MTCNN_thermal_16bit/results')

@@ -21,9 +21,9 @@ def get_latest_ckpt(model_dir, ckpt_prefix):
     return os.path.join(model_dir, m[-1][:-5])
 
 
-ANNO_FP = '/home/matt/Desktop/MTCNN_thermal_data/train_annotations.txt'
-IMAGE_DIR = '/home/matt/Desktop/MTCNN_thermal_data/images'
-ROOT_DIR = '/home/matt/Desktop/MTCNN_thermal_data'
+ANNO_FP = '/home/matt/Desktop/MTCNN_thermal_16bit/train_annotations.txt'
+IMAGE_DIR = '/home/matt/Desktop/MTCNN_thermal_16bit/images'
+ROOT_DIR = '/home/matt/Desktop/MTCNN_thermal_16bit'
 MODEL_DIR = os.path.join(ROOT_DIR, 'models')
 PNET_DIR = os.path.join(MODEL_DIR, 'pnet')
 RNET_DIR = os.path.join(MODEL_DIR, 'rnet')
@@ -54,7 +54,7 @@ mtcnn_pnet_test.train_Pnet(
                    os.path.join(ROOT_DIR, 'pnet_bbox.tfrecord'),
                    os.path.join(ROOT_DIR, 'pnet_landmarks.tfrecord')],
     base_lr=0.0001,
-    loss_weight=[1.0, 0.5, 1.0],
+    loss_weight=[1.0, 0.5, 0.5],
     train_mode=3,
     num_epochs=[1000, 1000, 1000],
     load_model=False,
@@ -97,7 +97,7 @@ mtcnn_rnet_test.train_Rnet(
                    os.path.join(ROOT_DIR, 'rnet_bbox.tfrecord'),
                    os.path.join(ROOT_DIR, 'rnet_landmarks.tfrecord')],
     base_lr=0.0001,
-    loss_weight=[1.0, 0.5, 1.0],
+    loss_weight=[1.0, 0.5, 0.5],
     train_mode=3,
     num_epochs=[2000, 2000, 2000],
     load_model=False,
@@ -139,16 +139,16 @@ mtcnn_onet_test.train_Onet(
     training_data=[os.path.join(ROOT_DIR, 'onet_cls.tfrecord'),
                    os.path.join(ROOT_DIR, 'onet_bbox.tfrecord'),
                    os.path.join(ROOT_DIR, 'onet_landmarks.tfrecord')],
-    base_lr=0.0001,
-    loss_weight=[1.0, 0.5, 1.5],
+    base_lr=0.0005,
+    loss_weight=[1.0, 0.5, 1.0],
     train_mode=3,
-    num_epochs=[4000, 4000, 4000],
+    num_epochs=[5000, 5000, 5000],
     load_model=False,
     load_filename='/home/matt/dev/MTCNN-Tensorflow/'
                   'pretrained/initial_weight_onet.npy',
     save_model=True,
     save_filename=os.path.join(ONET_DIR, 'onet'),
-    num_iter_to_save=1000,
+    num_iter_to_save=500,
     device='/gpu:0',
     gpu_memory_fraction=0.9
 )

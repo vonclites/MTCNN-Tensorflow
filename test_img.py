@@ -82,6 +82,7 @@ def main(image_path, model_dir, thresholds, min_size, factor, save_image, save_n
                     saver = tf.train.import_meta_graph(file_paths[0])
                     saver.restore(sess, file_paths[1])
 
+
                     def pnet_fun(img): return sess.run(
                         ('softmax/Reshape_1:0',
                          'pnet/conv4-2/BiasAdd:0'),
@@ -102,6 +103,7 @@ def main(image_path, model_dir, thresholds, min_size, factor, save_image, save_n
                             'Placeholder_2:0': img})
 
                 start_time = time.time()
+
                 rectangles, points = detect_face(img, min_size,
                                                  pnet_fun, rnet_fun, onet_fun,
                                                  thresholds, factor)
