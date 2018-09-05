@@ -26,7 +26,7 @@ import os
 
 import tensorflow as tf
 import numpy as np
-from tensorflow.contrib.layers import batch_norm
+from tensorflow.contrib.layers import fully_connected, conv2d, batch_norm
 
 def layer(op):
     def layer_decorated(self, *args, **kwargs):
@@ -127,7 +127,7 @@ class NetWork(object):
     @layer
     def conv(self, inp, k_h, k_w, c_o, s_h, s_w, name,
              task=None, relu=True, padding='SAME',
-             group=1, biased=True, wd=None):
+             group=1, biased=False, wd=None):
 
         self.validate_padding(padding)
         c_i = int(inp.get_shape()[-1])
@@ -154,6 +154,8 @@ class NetWork(object):
             if biased:
                 biases = self.make_var('biases', [c_o])
                 output = tf.nn.bias_add(output, biases)
+            else:
+                output = batch_norm(output, decay=0.9)
             if relu:
                 output = tf.nn.relu(output, name=scope.name)
             return output
@@ -176,7 +178,7 @@ class NetWork(object):
                               name=name)
 
     @layer
-    def fc(self, inp, num_out, name, task=None, relu=True, wd=None):
+    def fc(self, inp, num_out, name, task=None, biased=False, relu=True, wd=None):
         with tf.variable_scope(name):
             input_shape = inp.get_shape()
             if input_shape.ndims == 4:
@@ -190,9 +192,15 @@ class NetWork(object):
             if (wd is not None) and (self.mode == 'train'):
                 self.weight_decay[task] \
                     .append(tf.multiply(tf.nn.l2_loss(weights), wd))
-            biases = self.make_var('biases', [num_out])
-            op = tf.nn.relu_layer if relu else tf.nn.xw_plus_b
-            return op(feed_in, weights, biases, name=name)
+            if biased:
+                biases = self.make_var('biases', [num_out])
+                output = tf.nn.xw_plus_b(inp, weights, biases)
+                if relu:
+                    output = tf.nn.relu_layer(feed_in, weights, biases, name=name)
+            else:
+                output = tf.matmul(inp, weights)
+                output = batch_norm(output, decay=0.9)
+            return output
 
     @layer
     def softmax(self, target, name=None):
