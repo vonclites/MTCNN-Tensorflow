@@ -26,7 +26,7 @@ import os
 
 import tensorflow as tf
 import numpy as np
-
+from tensorflow.contrib.layers import batch_norm
 
 def layer(op):
     def layer_decorated(self, *args, **kwargs):
@@ -314,14 +314,14 @@ class ONet(NetWork):
             self.out_put.append(self.get_output())
         else:
             (self.feed('prelu5')
-                 .fc(2, relu=False, name='onet/conv6-1')
+                 .fc(2, task=task, relu=False, name='onet/conv6-1')
                  .softmax(name='softmax'))
             self.out_put.append(self.get_output())
             (self.feed('prelu5')
-                 .fc(4, relu=False, name='onet/conv6-2'))
+                 .fc(4, task=task, relu=False, name='onet/conv6-2'))
             self.out_put.append(self.get_output())
             (self.feed('prelu5')
-                 .fc(10, relu=False, name='onet/conv6-3'))
+                 .fc(10, task=task, relu=False, name='onet/conv6-3'))
             self.out_put.append(self.get_output())
 
 
@@ -373,7 +373,7 @@ def inputs(filename, batch_size, num_epochs, label_type, shape):
 
 def train_net(Net, training_data, base_lr, loss_weight,
               train_mode, num_epochs=[1, None, None],
-              batch_size=64, weight_decay=4e-3,
+              batch_size=128, weight_decay=4e-3,
               load_model=False, load_filename=None,
               save_model=False, save_filename=None,
               num_iter_to_save=10000,
@@ -448,6 +448,12 @@ def train_net(Net, training_data, base_lr, loss_weight,
     train_pts = tf.train.AdamOptimizer(learning_rate=base_lr) \
                         .minimize(losses_pts, global_step=global_step_pts)
 
+    with tf.name_scope('loss'):
+        summary_cls = tf.summary.scalar('classifier', losses_cls)
+        summary_bbx = tf.summary.scalar('bbox', losses_bbx)
+        summary_pts = tf.summary.scalar('landmarks', losses_pts)
+
+
     init_op = tf.group(tf.global_variables_initializer(),
                        tf.local_variables_initializer())
 
@@ -462,6 +468,8 @@ def train_net(Net, training_data, base_lr, loss_weight,
     step_value = [1, 1, 1]
 
     with tf.Session(config=config) as sess:
+        summary_writer = tf.summary.FileWriter(os.path.dirname(save_filename),
+                                               sess.graph)
         sess.run(init_op)
         saver = tf.train.Saver(max_to_keep=1)
         if load_model:
@@ -478,19 +486,26 @@ def train_net(Net, training_data, base_lr, loss_weight,
             while not coord.should_stop():
                 choic = np.random.randint(0, train_mode)
                 if choic == 0:
-                    _, loss_value_cls, step_value[0] = sess.run(
-                        [train_cls, softmax_loss, global_step_cls])
+                    _, loss_value_cls, step_value[0], summary = sess.run(
+                        [train_cls, softmax_loss, global_step_cls, summary_cls]
+                    )
                     loss_agg_cls.append(loss_value_cls)
+                    summary_writer.add_summary(summary, global_step_cls)
                 elif choic == 1:
-                    _, loss_value_bbx, step_value[1] = sess.run(
-                        [train_bbx, square_bbx_loss, global_step_bbx])
+                    _, loss_value_bbx, step_value[1], summary = sess.run(
+                        [train_bbx, square_bbx_loss, global_step_bbx, summary_bbx]
+                    )
                     loss_agg_bbx.append(loss_value_bbx)
+                    summary_writer.add_summary(summary, global_step_bbx)
                 else:
-                    _, loss_value_pts, step_value[2] = sess.run(
-                        [train_pts, square_pts_loss, global_step_pts])
+                    _, loss_value_pts, step_value[2], summary = sess.run(
+                        [train_pts, square_pts_loss, global_step_pts, summary_pts]
+                    )
                     loss_agg_pts.append(loss_value_pts)
+                    summary_writer.add_summary(summary, global_step_pts)
 
                 if sum(step_value) % (100 * train_mode) == 0:
+
                     agg_cls = sum(loss_agg_cls) / len(loss_agg_cls)
                     agg_bbx = sum(loss_agg_bbx) / len(loss_agg_bbx)
                     agg_pts = sum(loss_agg_pts) / len(loss_agg_pts)
