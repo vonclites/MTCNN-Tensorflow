@@ -28,6 +28,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.contrib.layers import fully_connected, conv2d, batch_norm
 
+
 def layer(op):
     def layer_decorated(self, *args, **kwargs):
         name = kwargs.setdefault('name', self.get_unique_name(op.__name__))
@@ -75,7 +76,7 @@ class NetWork(object):
     def setup(self, task='data'):
         raise NotImplementedError('Must be implemented by the subclass.')
 
-    def load(self, data_path, session, prefix, ignore_missing=False):
+    def load(self, data_path, session, prefix, ignore_missing=True):
         data_dict = np.load(data_path, encoding='latin1').item()
         for op_name in data_dict:
             with tf.variable_scope(prefix + op_name, reuse=True):
@@ -198,7 +199,7 @@ class NetWork(object):
                 if relu:
                     output = tf.nn.relu_layer(feed_in, weights, biases, name=name)
             else:
-                output = tf.matmul(inp, weights)
+                output = tf.matmul(feed_in, weights)
                 output = batch_norm(output, decay=0.9)
             return output
 
@@ -212,12 +213,12 @@ class PNet(NetWork):
     def setup(self, task='data', reuse=False):
         with tf.variable_scope('pnet', reuse=reuse):
             (self.feed(task)  # pylint: disable=no-value-for-parameter, no-member
-             .conv(3, 3, 10, 1, 1, padding='VALID', relu=False, name='conv1')
+             .conv(3, 3, 10, 1, 1, padding='VALID', relu=False, biased=True, name='conv1')
              .prelu(name='PReLU1')
              .max_pool(2, 2, 2, 2, name='pool1')
-             .conv(3, 3, 16, 1, 1, padding='VALID', relu=False, name='conv2')
+             .conv(3, 3, 16, 1, 1, padding='VALID', relu=False, biased=True, name='conv2')
              .prelu(name='PReLU2')
-             .conv(3, 3, 32, 1, 1, padding='VALID', relu=False, name='conv3')
+             .conv(3, 3, 32, 1, 1, padding='VALID', relu=False, biased=False, name='conv3')
              .prelu(name='PReLU3'))
         if self.mode == 'train':
             if task == 'cls':
@@ -250,15 +251,15 @@ class RNet(NetWork):
     def setup(self, task='data', reuse=False):
         with tf.variable_scope('rnet', reuse=reuse):
             (self.feed(task)  # pylint: disable=no-value-for-parameter, no-member
-             .conv(3, 3, 28, 1, 1, padding='VALID', relu=False, name='conv1')
+             .conv(3, 3, 28, 1, 1, padding='VALID', relu=False, biased=True, name='conv1')
              .prelu(name='prelu1')
              .max_pool(3, 3, 2, 2, name='pool1')
-             .conv(3, 3, 48, 1, 1, padding='VALID', relu=False, name='conv2')
+             .conv(3, 3, 48, 1, 1, padding='VALID', relu=False, biased=True, name='conv2')
              .prelu(name='prelu2')
              .max_pool(3, 3, 2, 2, padding='VALID', name='pool2')
-             .conv(2, 2, 64, 1, 1, padding='VALID', relu=False, name='conv3')
+             .conv(2, 2, 64, 1, 1, padding='VALID', relu=False, biased=True, name='conv3')
              .prelu(name='prelu3')
-             .fc(128, relu=False, name='conv4')
+             .fc(128, relu=False, biased=False, name='conv4')
              .prelu(name='prelu4'))
 
         if self.mode == 'train':
@@ -292,16 +293,16 @@ class ONet(NetWork):
     def setup(self, task='data', reuse=False):
         with tf.variable_scope('onet', reuse=reuse):
             (self.feed(task)  # pylint: disable=no-value-for-parameter, no-member
-             .conv(3, 3, 32, 1, 1, padding='VALID', relu=False, name='conv1')
+             .conv(3, 3, 32, 1, 1, padding='VALID', relu=False, biased=True, name='conv1')
              .prelu(name='prelu1')
              .max_pool(3, 3, 2, 2, name='pool1')
-             .conv(3, 3, 64, 1, 1, padding='VALID', relu=False, name='conv2')
+             .conv(3, 3, 64, 1, 1, padding='VALID', relu=False, biased=True, name='conv2')
              .prelu(name='prelu2')
              .max_pool(3, 3, 2, 2, padding='VALID', name='pool2')
-             .conv(3, 3, 64, 1, 1, padding='VALID', relu=False, name='conv3')
+             .conv(3, 3, 64, 1, 1, padding='VALID', relu=False, biased=True, name='conv3')
              .prelu(name='prelu3')
              .max_pool(2, 2, 2, 2, name='pool3')
-             .conv(2, 2, 128, 1, 1, padding='VALID', relu=False, name='conv4')
+             .conv(2, 2, 128, 1, 1, padding='VALID', relu=False, biased=True, name='conv4')
              .prelu(name='prelu4')
              .fc(256, relu=False, name='conv5')
              .prelu(name='prelu5'))
@@ -498,19 +499,19 @@ def train_net(Net, training_data, base_lr, loss_weight,
                         [train_cls, softmax_loss, global_step_cls, summary_cls]
                     )
                     loss_agg_cls.append(loss_value_cls)
-                    summary_writer.add_summary(summary, global_step_cls)
+                    summary_writer.add_summary(summary, step_value[0])
                 elif choic == 1:
                     _, loss_value_bbx, step_value[1], summary = sess.run(
                         [train_bbx, square_bbx_loss, global_step_bbx, summary_bbx]
                     )
                     loss_agg_bbx.append(loss_value_bbx)
-                    summary_writer.add_summary(summary, global_step_bbx)
+                    summary_writer.add_summary(summary, step_value[1])
                 else:
                     _, loss_value_pts, step_value[2], summary = sess.run(
                         [train_pts, square_pts_loss, global_step_pts, summary_pts]
                     )
                     loss_agg_pts.append(loss_value_pts)
-                    summary_writer.add_summary(summary, global_step_pts)
+                    summary_writer.add_summary(summary, step_value[2])
 
                 if sum(step_value) % (100 * train_mode) == 0:
 
