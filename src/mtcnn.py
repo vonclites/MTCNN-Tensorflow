@@ -218,32 +218,35 @@ class PNet(NetWork):
              .max_pool(2, 2, 2, 2, name='pool1')
              .conv(3, 3, 16, 1, 1, padding='VALID', relu=False, biased=True, name='conv2')
              .prelu(name='PReLU2')
-             .conv(3, 3, 32, 1, 1, padding='VALID', relu=False, biased=False, name='conv3')
+             .conv(3, 3, 32, 1, 1, padding='VALID', relu=False, biased=True, name='conv3')
              .prelu(name='PReLU3'))
         if self.mode == 'train':
             if task == 'cls':
                 (self.feed('PReLU3')
-                     .conv(1, 1, 2, 1, 1, task=task, relu=False,
+                     .conv(1, 1, 2, 1, 1, task=task, relu=False, biased=True,
                            name='pnet/conv4-1', wd=self.weight_decay_coeff))
             elif task == 'bbx':
                 (self.feed('PReLU3')
-                     .conv(1, 1, 4, 1, 1, task=task, relu=False,
+                     .conv(1, 1, 4, 1, 1, task=task, relu=False, biased=True,
                            name='pnet/conv4-2', wd=self.weight_decay_coeff))
             elif task == 'pts':
                 (self.feed('PReLU3')
-                     .conv(1, 1, 10, 1, 1, task=task, relu=False,
+                     .conv(1, 1, 10, 1, 1, task=task, relu=False, biased=True,
                            name='pnet/conv4-3', wd=self.weight_decay_coeff))
             self.out_put.append(self.get_output())
         else:
             (self.feed('PReLU3')
-                 .conv(1, 1, 2, 1, 1, relu=False, name='pnet/conv4-1')
+                 .conv(1, 1, 2, 1, 1, relu=False, biased=True,
+                       name='pnet/conv4-1')
                  .softmax(name='softmax'))
             self.out_put.append(self.get_output())
             (self.feed('PReLU3')
-                 .conv(1, 1, 4, 1, 1, relu=False, name='pnet/conv4-2'))
+                 .conv(1, 1, 4, 1, 1, relu=False, biased=True,
+                       name='pnet/conv4-2'))
             self.out_put.append(self.get_output())
             (self.feed('PReLU3')
-             .conv(1, 1, 10, 1, 1, relu=False, name='pnet/conv4-3'))
+             .conv(1, 1, 10, 1, 1, relu=False, biased=True,
+                   name='pnet/conv4-3'))
             self.out_put.append(self.get_output())
 
 
@@ -259,33 +262,33 @@ class RNet(NetWork):
              .max_pool(3, 3, 2, 2, padding='VALID', name='pool2')
              .conv(2, 2, 64, 1, 1, padding='VALID', relu=False, biased=True, name='conv3')
              .prelu(name='prelu3')
-             .fc(128, relu=False, biased=False, name='conv4')
+             .fc(128, relu=False, biased=True, name='conv4')
              .prelu(name='prelu4'))
 
         if self.mode == 'train':
             if task == 'cls':
                 (self.feed('prelu4')
-                     .fc(2, task=task, relu=False,
+                     .fc(2, task=task, relu=False, biased=True,
                          name='rnet/conv5-1', wd=self.weight_decay_coeff))
             elif task == 'bbx':
                 (self.feed('prelu4')
-                     .fc(4, task=task, relu=False,
+                     .fc(4, task=task, relu=False, biased=True,
                          name='rnet/conv5-2', wd=self.weight_decay_coeff))
             elif task == 'pts':
                 (self.feed('prelu4')
-                     .fc(10, task=task, relu=False,
+                     .fc(10, task=task, relu=False, biased=True,
                          name='rnet/conv5-3', wd=self.weight_decay_coeff))
             self.out_put.append(self.get_output())
         else:
             (self.feed('prelu4')
-                 .fc(2, relu=False, name='rnet/conv5-1')
+                 .fc(2, relu=False, biased=True, name='rnet/conv5-1')
                  .softmax(name='softmax'))
             self.out_put.append(self.get_output())
             (self.feed('prelu4')
-                 .fc(4, relu=False, name='rnet/conv5-2'))
+                 .fc(4, relu=False, biased=True, name='rnet/conv5-2'))
             self.out_put.append(self.get_output())
             (self.feed('prelu4')
-                 .fc(10, relu=False, name='rnet/conv5-3'))
+                 .fc(10, relu=False, biased=True, name='rnet/conv5-3'))
             self.out_put.append(self.get_output())
 
 
@@ -380,7 +383,7 @@ def inputs(filename, batch_size, num_epochs, label_type, shape):
         return images, sparse_labels
 
 
-def train_net(Net, training_data, base_lr, loss_weight,
+def train_net(Net, training_data, base_lr, loss_weight, shape,
               train_mode, num_epochs=[1, None, None],
               batch_size=128, weight_decay=4e-3,
               load_model=False, load_filename=None,
@@ -391,11 +394,6 @@ def train_net(Net, training_data, base_lr, loss_weight,
     images = []
     labels = []
     tasks = ['cls', 'bbx', 'pts']
-    shape = 12
-    if Net.__name__ == 'RNet':
-        shape = 24
-    elif Net.__name__ == 'ONet':
-        shape = 48
     for index in range(train_mode):
         image, label = inputs(filename=[training_data[index]],
                               batch_size=batch_size,

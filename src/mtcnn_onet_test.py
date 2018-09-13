@@ -27,7 +27,7 @@ import tensorflow as tf
 from src.mtcnn import train_net, ONet
 
 
-def train_Onet(training_data, base_lr, loss_weight,
+def train_Onet(training_data, base_lr, loss_weight, input_shape,
                train_mode, num_epochs,
                load_model=False, load_filename=None,
                save_model=False, save_filename=None,
@@ -41,6 +41,7 @@ def train_Onet(training_data, base_lr, loss_weight,
                       training_data=training_data,
                       base_lr=base_lr,
                       loss_weight=loss_weight,
+                      shape=input_shape,
                       train_mode=train_mode,
                       num_epochs=num_epochs,
                       load_model=load_model,
