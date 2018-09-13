@@ -195,7 +195,7 @@ class NetWork(object):
                     .append(tf.multiply(tf.nn.l2_loss(weights), wd))
             if biased:
                 biases = self.make_var('biases', [num_out])
-                output = tf.nn.xw_plus_b(inp, weights, biases)
+                output = tf.nn.xw_plus_b(feed_in, weights, biases)
                 if relu:
                     output = tf.nn.relu_layer(feed_in, weights, biases, name=name)
             else:
@@ -461,7 +461,6 @@ def train_net(Net, training_data, base_lr, loss_weight,
         summary_cls = tf.summary.scalar('classifier', losses_cls)
         summary_bbx = tf.summary.scalar('bbox', losses_bbx)
         summary_pts = tf.summary.scalar('landmarks', losses_pts)
-
 
     init_op = tf.group(tf.global_variables_initializer(),
                        tf.local_variables_initializer())
