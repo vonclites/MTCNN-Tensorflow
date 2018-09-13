@@ -33,8 +33,7 @@ from tools import detect_face_24net, IoU, view_bar
 from src.mtcnn import PNet, RNet
 
 
-def main(annotation_fp, image_dir, pnet_model_fp, rnet_model_fp, output_dir):
-    image_size = 48
+def main(annotation_fp, image_dir, pnet_model_fp, rnet_model_fp, output_dir, image_size):
     save_dir = os.path.join(output_dir, str(image_size))
 
     neg_save_dir = save_dir+'/negative'
