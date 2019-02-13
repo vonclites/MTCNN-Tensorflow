@@ -125,7 +125,7 @@ def detect_face(img, minsize, pnet, rnet, onet, threshold, factor):
                                        scale,
                                        threshold[0])
 
-        # inter-scale nms
+        # inter-scale nms / not really -- intra scale
         pick = nms(boxes.copy(), 0.5, 'Union')
         if boxes.size > 0 and pick.size > 0:
             boxes = boxes[pick, :]
@@ -183,14 +183,14 @@ def detect_face(img, minsize, pnet, rnet, onet, threshold, factor):
         total_boxes = np.fix(total_boxes).astype(np.int32)
         dy, edy, dx, edx, y, ey, x, ex, tmpw, tmph = pad(
             total_boxes.copy(), w, h)
-        tempimg = np.zeros((48, 48, 3, numbox))
+        tempimg = np.zeros((96, 96, 3, numbox))
         for k in range(0, numbox):
             tmp = np.zeros((int(tmph[k]), int(tmpw[k]), 3))
             tmp[dy[k] - 1:edy[k], dx[k] - 1:edx[k],
                 :] = img[y[k] - 1:ey[k], x[k] - 1:ex[k], :]
             if (tmp.shape[0] > 0 and tmp.shape[1] > 0 or
                     tmp.shape[0] == 0 and tmp.shape[1] == 0):
-                tempimg[:, :, :, k] = imresample(tmp, (48, 48))
+                tempimg[:, :, :, k] = imresample(tmp, (96, 96))
             else:
                 return np.empty()
         tempimg = (tempimg - 127.5) * (1 / 128.)
@@ -212,8 +212,8 @@ def detect_face(img, minsize, pnet, rnet, onet, threshold, factor):
 
         '''Convert point from 48x48 space to size of candidate window
          relative to the dimensions of the original image'''
-        points[0:10:2, :] = points[0:10:2, :] / 48 * w
-        points[1:11:2, :] = points[1:11:2, :] / 48 * h
+        points[0:10:2, :] = points[0:10:2, :] / 96 * w
+        points[1:11:2, :] = points[1:11:2, :] / 96 * h
 
         # Original authors code
         # points[0:10:2, :] = np.tile(w, (5, 1)) * \
@@ -437,6 +437,7 @@ def generateBoundingBox(imap, reg, scale, t):
     # bbox adjustments to coordinates of predicted face windows
     reg = np.transpose(np.vstack([dx1[(y, x)], dy1[(y, x)],
                                   dx2[(y, x)], dy2[(y, x)]]))
+
     if reg.size == 0:
         reg = np.empty((0, 3))
     bb = np.transpose(np.vstack([y, x]))

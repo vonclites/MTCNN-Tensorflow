@@ -67,8 +67,8 @@ def main(input_size, classifier_tfrecord_fp, localizer_tfrecord_fp, root_data_di
         image_file_name = words[0]
         im = cv2.imread(image_file_name)
         h, w, ch = im.shape
-        if h != 48 or w != 48:
-            im = cv2.resize(im, (48, 48))
+        if h != input_size or w != input_size:
+            im = cv2.resize(im, (input_size, input_size))
         im = im.astype('uint8')
         label = np.array([0, 1], dtype='float32')
         label_raw = label.tostring()
@@ -92,8 +92,6 @@ def main(input_size, classifier_tfrecord_fp, localizer_tfrecord_fp, root_data_di
         image_file_name = words[0]
         im = cv2.imread(image_file_name)
         h, w, ch = im.shape
-        if h != 48 or w != 48:
-            im = cv2.resize(im, (48, 48))
         im = im.astype('uint8')
         label = np.array([0, 1], dtype='float32')
         label_raw = label.tostring()
@@ -116,8 +114,6 @@ def main(input_size, classifier_tfrecord_fp, localizer_tfrecord_fp, root_data_di
         image_file_name = words[0]
         im = cv2.imread(image_file_name)
         h, w, ch = im.shape
-        if h != 48 or w != 48:
-            im = cv2.resize(im, (48, 48))
         im = im.astype('uint8')
         label = np.array([1, 0], dtype='float32')
         label_raw = label.tostring()
@@ -138,8 +134,6 @@ def main(input_size, classifier_tfrecord_fp, localizer_tfrecord_fp, root_data_di
         image_file_name = words[0]
         im = cv2.imread(image_file_name)
         h, w, ch = im.shape
-        if h != 48 or w != 48:
-            im = cv2.resize(im, (48, 48))
         im = im.astype('uint8')
         label = np.array([1, 0], dtype='float32')
         label_raw = label.tostring()
@@ -169,8 +163,6 @@ def main(input_size, classifier_tfrecord_fp, localizer_tfrecord_fp, root_data_di
         image_file_name = words[0]
         im = cv2.imread(image_file_name)
         h, w, ch = im.shape
-        if h != 48 or w != 48:
-            im = cv2.resize(im, (48, 48))
         im = im.astype('uint8')
         label = np.array([float(words[2]), float(words[3]),
                           float(words[4]), float(words[5])],
@@ -194,8 +186,6 @@ def main(input_size, classifier_tfrecord_fp, localizer_tfrecord_fp, root_data_di
         image_file_name = words[0]
         im = cv2.imread(image_file_name)
         h, w, ch = im.shape
-        if h != 48 or w != 48:
-            im = cv2.resize(im, (48, 48))
         im = im.astype('uint8')
         label = np.array([float(words[2]), float(words[3]),
                           float(words[4]), float(words[5])],
@@ -218,8 +208,6 @@ def main(input_size, classifier_tfrecord_fp, localizer_tfrecord_fp, root_data_di
         image_file_name = words[0]
         im = cv2.imread(image_file_name)
         h, w, ch = im.shape
-        if h != 48 or w != 48:
-            im = cv2.resize(im, (48, 48))
         im = im.astype('uint8')
         label = np.array([float(words[2]), float(words[3]),
                           float(words[4]), float(words[5])],
@@ -244,8 +232,6 @@ def main(input_size, classifier_tfrecord_fp, localizer_tfrecord_fp, root_data_di
         image_file_name = words[0]
         im = cv2.imread(image_file_name)
         h, w, ch = im.shape
-        if h != 48 or w != 48:
-            im = cv2.resize(im, (48, 48))
         im = im.astype('uint8')
         label = np.array([float(words[2]), float(words[3]),
                           float(words[4]), float(words[5])],

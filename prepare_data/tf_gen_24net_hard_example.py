@@ -48,9 +48,9 @@ def main(annotation_fp, image_dir, pnet_model_fp, rnet_model_fp, output_dir, ima
     if not os.path.exists(neg_save_dir):
         os.mkdir(neg_save_dir)
 
-    f1 = open(save_dir+'/pos_48.txt', 'w')
-    f2 = open(save_dir+'/neg_48.txt', 'w')
-    f3 = open(save_dir+'/part_48.txt', 'w')
+    f1 = open(save_dir+'/pos_{}.txt'.format(image_size), 'w')
+    f2 = open(save_dir+'/neg_{}.txt'.format(image_size), 'w')
+    f3 = open(save_dir+'/part_{}.txt'.format(image_size), 'w')
     threshold = [0.6, 0.6]
     with open(annotation_fp, 'r') as f:
         annotations = f.readlines()

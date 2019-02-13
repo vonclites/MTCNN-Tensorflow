@@ -14,7 +14,7 @@ def run(image_dir,
         annotation_fp,
         model_dir,
         output_dir,
-        thresholds=(0.8, 0.8, 0.8),
+        thresholds=(0.5, 0.5, 0.5),
         min_size=20,
         factor=0.7):
     with open(annotation_fp, 'r') as f:
@@ -46,7 +46,7 @@ def run(image_dir,
     print("Non-Detections: " + str(non_detections))
 
 
-run(image_dir='/home/matt/Desktop/MTCNN_thermal_16bit/images',
-    annotation_fp='/home/matt/Desktop/MTCNN_thermal_16bit/test_annotations.txt',
-    model_dir='/home/matt/Desktop/MTCNN_thermal_16bit/models',
-    output_dir='/home/matt/Desktop/MTCNN_thermal_16bit/results')
+run(image_dir='/home/matt/Desktop/MTCNN_thermal_data/images',
+    annotation_fp='/home/matt/Desktop/MTCNN_thermal_data/test_annotations.txt',
+    model_dir='/home/matt/Desktop/MTCNN_thermal_data/models',
+    output_dir='/home/matt/Desktop/MTCNN_thermal_data/results')

@@ -477,7 +477,7 @@ def train_net(Net, training_data, base_lr, loss_weight, shape,
         summary_writer = tf.summary.FileWriter(os.path.dirname(save_filename),
                                                sess.graph)
         sess.run(init_op)
-        saver = tf.train.Saver(max_to_keep=1)
+        saver = tf.train.Saver(max_to_keep=10)
         if load_model:
             saver.restore(sess, load_filename)
         else:

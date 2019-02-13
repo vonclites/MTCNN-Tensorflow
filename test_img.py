@@ -49,7 +49,7 @@ def main(image_path, model_dir, thresholds, min_size, factor, save_image, save_n
                     rnet = RNet({'data': image_rnet}, mode='test')
                     out_tensor_rnet = rnet.get_all_output()
 
-                    image_onet = tf.placeholder(tf.float32, [None, 48, 48, 3])
+                    image_onet = tf.placeholder(tf.float32, [None, 96, 96, 3])
                     onet = ONet({'data': image_onet}, mode='test')
                     out_tensor_onet = onet.get_all_output()
 

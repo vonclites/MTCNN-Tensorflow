@@ -21,59 +21,59 @@ def get_latest_ckpt(model_dir, ckpt_prefix):
     return os.path.join(model_dir, m[-1][:-5])
 
 
-ANNO_FP = '/home/matt/Desktop/MTCNN_thermal_data/test_annotations.txt'
+ANNO_FP = '/home/matt/Desktop/MTCNN_thermal_data/train_annotations.txt'
 IMAGE_DIR = '/home/matt/Desktop/MTCNN_thermal_data/images'
-ROOT_DIR = '/home/matt/Desktop/MTCNN_thermal_data/debug'
+ROOT_DIR = '/home/matt/Desktop/MTCNN_thermal_data'
 MODEL_DIR = os.path.join(ROOT_DIR, 'models')
 PNET_DIR = os.path.join(MODEL_DIR, 'pnet')
 RNET_DIR = os.path.join(MODEL_DIR, 'rnet')
 ONET_DIR = os.path.join(MODEL_DIR, 'onet')
 
 
-gen_shuffle_data.main(
-    input_size=12,
-    annotation_fp=ANNO_FP,
-    image_dir=IMAGE_DIR,
-    output_dir=ROOT_DIR
-)
-gen_tfdata_12net.main(
-    input_size=12,
-    classifier_tfrecord_fp=os.path.join(ROOT_DIR, 'pnet_cls.tfrecord'),
-    localizer_tfrecord_fp=os.path.join(ROOT_DIR, 'pnet_bbox.tfrecord'),
-    root_data_dir=ROOT_DIR
-)
-gen_tfdata_landmarks.write_tfrecord(
-    input_size=12,
-    annotation_fp=ANNO_FP,
-    image_dir=IMAGE_DIR,
-    tfrecord_fp=os.path.join(ROOT_DIR, 'pnet_landmarks.tfrecord')
-)
-
+# gen_shuffle_data.main(
+#     input_size=12,
+#     annotation_fp=ANNO_FP,
+#     image_dir=IMAGE_DIR,
+#     output_dir=ROOT_DIR
+# )
+# gen_tfdata_12net.main(
+#     input_size=12,
+#     classifier_tfrecord_fp=os.path.join(ROOT_DIR, 'pnet_cls.tfrecord'),
+#     localizer_tfrecord_fp=os.path.join(ROOT_DIR, 'pnet_bbox.tfrecord'),
+#     root_data_dir=ROOT_DIR
+# )
+# gen_tfdata_landmarks.write_tfrecord(
+#     input_size=12,
+#     annotation_fp=ANNO_FP,
+#     image_dir=IMAGE_DIR,
+#     tfrecord_fp=os.path.join(ROOT_DIR, 'pnet_landmarks.tfrecord'),
+#     landmark_padding=30,
+#     jittered_samples_per_image=3
+# )
 mtcnn_pnet_test.train_Pnet(
+    input_shape=12,
     training_data=[os.path.join(ROOT_DIR, 'pnet_cls.tfrecord'),
                    os.path.join(ROOT_DIR, 'pnet_bbox.tfrecord'),
                    os.path.join(ROOT_DIR, 'pnet_landmarks.tfrecord')],
     base_lr=0.0001,
     loss_weight=[1.0, 0.5, 0.5],
     train_mode=3,
-    num_epochs=[500, 500, 500],
+    num_epochs=[15, 15, 15],
     load_model=False,
     load_filename='/home/matt/dev/MTCNN-Tensorflow/'
                   'pretrained/initial_weight_pnet.npy',
     save_model=True,
     save_filename=os.path.join(PNET_DIR, 'pnet'),
-    num_iter_to_save=10,
+    num_iter_to_save=500,
     device='/gpu:0',
     gpu_memory_fraction=0.9
 )
-
 tf_gen_12net_hard_example.main(
     annotation_fp=ANNO_FP,
     image_dir=IMAGE_DIR,
     model_fp=get_latest_ckpt(model_dir=PNET_DIR, ckpt_prefix='pnet'),
     output_dir=ROOT_DIR
 )
-
 gen_shuffle_data.main(
     input_size=24,
     annotation_fp=ANNO_FP,
@@ -90,28 +90,30 @@ gen_tfdata_landmarks.write_tfrecord(
     input_size=24,
     annotation_fp=ANNO_FP,
     image_dir=IMAGE_DIR,
-    tfrecord_fp=os.path.join(ROOT_DIR, 'rnet_landmarks.tfrecord')
+    tfrecord_fp=os.path.join(ROOT_DIR, 'rnet_landmarks.tfrecord'),
+    landmark_padding=30,
+    jittered_samples_per_image=3
 )
-
 mtcnn_rnet_test.train_Rnet(
+    input_shape=24,
     training_data=[os.path.join(ROOT_DIR, 'rnet_cls.tfrecord'),
                    os.path.join(ROOT_DIR, 'rnet_bbox.tfrecord'),
                    os.path.join(ROOT_DIR, 'rnet_landmarks.tfrecord')],
     base_lr=0.0001,
     loss_weight=[1.0, 0.5, 0.5],
     train_mode=3,
-    num_epochs=[10, 10, 10],
+    num_epochs=[20, 20, 20],
     load_model=False,
     load_filename='/home/matt/dev/MTCNN-Tensorflow/'
                   'pretrained/initial_weight_rnet.npy',
-    save_model=True,
+    save_model=False,
     save_filename=os.path.join(RNET_DIR, 'rnet'),
-    num_iter_to_save=1,
+    num_iter_to_save=500,
     device='/gpu:0',
     gpu_memory_fraction=0.9
 )
-
 tf_gen_24net_hard_example.main(
+    image_size=48,
     annotation_fp=ANNO_FP,
     image_dir=IMAGE_DIR,
     pnet_model_fp=get_latest_ckpt(model_dir=PNET_DIR, ckpt_prefix='pnet'),
@@ -119,38 +121,40 @@ tf_gen_24net_hard_example.main(
     output_dir=ROOT_DIR
 )
 gen_shuffle_data.main(
-    input_size=96,
+    input_size=48,
     annotation_fp=ANNO_FP,
     image_dir=IMAGE_DIR,
     output_dir=ROOT_DIR
 )
 gen_tfdata_48net.main(
-    input_size=96,
+    input_size=48,
     classifier_tfrecord_fp=os.path.join(ROOT_DIR, 'onet_cls.tfrecord'),
     localizer_tfrecord_fp=os.path.join(ROOT_DIR, 'onet_bbox.tfrecord'),
     root_data_dir=ROOT_DIR
 )
 gen_tfdata_landmarks.write_tfrecord(
-    input_size=96,
+    input_size=48,
     annotation_fp=ANNO_FP,
     image_dir=IMAGE_DIR,
-    tfrecord_fp=os.path.join(ROOT_DIR, 'onet_landmarks.tfrecord')
+    tfrecord_fp=os.path.join(ROOT_DIR, 'onet_landmarks.tfrecord'),
+    landmark_padding=30,
+    jittered_samples_per_image=3
 )
-
 mtcnn_onet_test.train_Onet(
+    input_shape=48,
     training_data=[os.path.join(ROOT_DIR, 'onet_cls.tfrecord'),
                    os.path.join(ROOT_DIR, 'onet_bbox.tfrecord'),
                    os.path.join(ROOT_DIR, 'onet_landmarks.tfrecord')],
     base_lr=0.0005,
     loss_weight=[1.0, 0.5, 1.0],
     train_mode=3,
-    num_epochs=[10, 10, 10],
+    num_epochs=[40, 40, 40],
     load_model=False,
     load_filename='/home/matt/dev/MTCNN-Tensorflow/'
                   'pretrained/initial_weight_onet.npy',
     save_model=True,
     save_filename=os.path.join(ONET_DIR, 'onet'),
-    num_iter_to_save=1,
+    num_iter_to_save=500,
     device='/gpu:0',
     gpu_memory_fraction=0.9
 )

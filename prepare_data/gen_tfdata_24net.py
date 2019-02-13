@@ -53,30 +53,30 @@ def main(input_size, classifier_tfrecord_fp, localizer_tfrecord_fp, root_data_di
                            % (input_size, input_size)), 'r') as f:
         part = f.readlines()
 
-    # print('\n'+'positive hard')
-    # cur_ = 0
-    # sum_ = len(pos_hard)
-    # print('Writing')
-    # examples = []
-    # writer = tf.python_io.TFRecordWriter(classifier_tfrecord_fp)
-    # for line in pos_hard:
-    #     view_bar(cur_, sum_)
-    #     cur_ += 1
-    #     words = line.split()
-    #     image_file_name = words[0]
-    #     im = cv2.imread(image_file_name)
-    #     h, w, ch = im.shape
-    #     if h != 24 or w != 24:
-    #         im = cv2.resize(im, (24, 24))
-    #     im = im.astype('uint8')
-    #     label = np.array([0, 1], dtype='float32')
-    #     label_raw = label.tostring()
-    #     image_raw = im.tostring()
-    #     example = tf.train.Example(features=tf.train.Features(feature={
-    #         'label_raw': bytes_feature(label_raw),
-    #         'image_raw': bytes_feature(image_raw)}))
-    #     examples.append(example)
-    # print(len(examples))
+    print('\n'+'positive hard')
+    cur_ = 0
+    sum_ = len(pos_hard)
+    print('Writing')
+    examples = []
+    writer = tf.python_io.TFRecordWriter(classifier_tfrecord_fp)
+    for line in pos_hard:
+        view_bar(cur_, sum_)
+        cur_ += 1
+        words = line.split()
+        image_file_name = words[0]
+        im = cv2.imread(image_file_name)
+        h, w, ch = im.shape
+        if h != 24 or w != 24:
+            im = cv2.resize(im, (24, 24))
+        im = im.astype('uint8')
+        label = np.array([0, 1], dtype='float32')
+        label_raw = label.tostring()
+        image_raw = im.tostring()
+        example = tf.train.Example(features=tf.train.Features(feature={
+            'label_raw': bytes_feature(label_raw),
+            'image_raw': bytes_feature(image_raw)}))
+        examples.append(example)
+    print(len(examples))
 
     print('\n'+'positive random cropped')
     cur_ = 0
@@ -161,54 +161,54 @@ def main(input_size, classifier_tfrecord_fp, localizer_tfrecord_fp, root_data_di
         examples.append(example)
     print(len(examples))
 
-    # print('\n'+'positive hard')
-    # cur_ = 0
-    # print('Writing')
-    # sum_ = len(pos_hard)
-    # for line in pos_hard:
-    #     view_bar(cur_, sum_)
-    #     cur_ += 1
-    #     words = line.split()
-    #     image_file_name = words[0]
-    #     im = cv2.imread(image_file_name)
-    #     h, w, ch = im.shape
-    #     if h != 24 or w != 24:
-    #         im = cv2.resize(im, (24, 24))
-    #     im = im.astype('uint8')
-    #     label = np.array([float(words[2]), float(words[3]),
-    #                       float(words[4]), float(words[5])],
-    #                      dtype='float32')
-    #     label_raw = label.tostring()
-    #     image_raw = im.tostring()
-    #     example = tf.train.Example(features=tf.train.Features(feature={
-    #         'label_raw': bytes_feature(label_raw),
-    #         'image_raw': bytes_feature(image_raw)}))
-    #     examples.append(example)
-    # print(len(examples))
+    print('\n'+'positive hard')
+    cur_ = 0
+    print('Writing')
+    sum_ = len(pos_hard)
+    for line in pos_hard:
+        view_bar(cur_, sum_)
+        cur_ += 1
+        words = line.split()
+        image_file_name = words[0]
+        im = cv2.imread(image_file_name)
+        h, w, ch = im.shape
+        if h != 24 or w != 24:
+            im = cv2.resize(im, (24, 24))
+        im = im.astype('uint8')
+        label = np.array([float(words[2]), float(words[3]),
+                          float(words[4]), float(words[5])],
+                         dtype='float32')
+        label_raw = label.tostring()
+        image_raw = im.tostring()
+        example = tf.train.Example(features=tf.train.Features(feature={
+            'label_raw': bytes_feature(label_raw),
+            'image_raw': bytes_feature(image_raw)}))
+        examples.append(example)
+    print(len(examples))
 
-    # print('\n'+'part hard')
-    # cur_ = 0
-    # sum_ = len(part_hard)
-    # for line in part_hard:
-    #     view_bar(cur_, sum_)
-    #     cur_ += 1
-    #     words = line.split()
-    #     image_file_name = words[0]
-    #     im = cv2.imread(image_file_name)
-    #     h, w, ch = im.shape
-    #     if h != 24 or w != 24:
-    #         im = cv2.resize(im, (24, 24))
-    #     im = im.astype('uint8')
-    #     label = np.array([float(words[2]), float(words[3]),
-    #                       float(words[4]), float(words[5])],
-    #                      dtype='float32')
-    #     label_raw = label.tostring()
-    #     image_raw = im.tostring()
-    #     example = tf.train.Example(features=tf.train.Features(feature={
-    #         'label_raw': bytes_feature(label_raw),
-    #         'image_raw': bytes_feature(image_raw)}))
-    #     examples.append(example)
-    # print(len(examples))
+    print('\n'+'part hard')
+    cur_ = 0
+    sum_ = len(part_hard)
+    for line in part_hard:
+        view_bar(cur_, sum_)
+        cur_ += 1
+        words = line.split()
+        image_file_name = words[0]
+        im = cv2.imread(image_file_name)
+        h, w, ch = im.shape
+        if h != 24 or w != 24:
+            im = cv2.resize(im, (24, 24))
+        im = im.astype('uint8')
+        label = np.array([float(words[2]), float(words[3]),
+                          float(words[4]), float(words[5])],
+                         dtype='float32')
+        label_raw = label.tostring()
+        image_raw = im.tostring()
+        example = tf.train.Example(features=tf.train.Features(feature={
+            'label_raw': bytes_feature(label_raw),
+            'image_raw': bytes_feature(image_raw)}))
+        examples.append(example)
+    print(len(examples))
 
     print('\n'+'part random cropped')
     cur_ = 0
